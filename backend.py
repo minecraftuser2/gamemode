@@ -10,9 +10,9 @@ app = Flask(__name__)
 DB_FILE = "gamemode.db"  # SQLite database file
 
 # Email settings (update with your info)
-EMAIL_ADDRESS = "youremail@example.com"  # sender email
-EMAIL_PASSWORD = "your-app-password"     # app-specific password or SMTP password
-EMAIL_RECEIVER = "youremail@example.com" # where suggestions go
+EMAIL_ADDRESS = "suggestionbot@gmail.com"  # sender email
+EMAIL_PASSWORD = "bot123456"     # app-specific password or SMTP password
+EMAIL_RECEIVER = "suggestionbox@gmail.com" # where suggestions go
 
 def encode_pw(pw):
     return base64.b64encode(pw.encode()).decode()
