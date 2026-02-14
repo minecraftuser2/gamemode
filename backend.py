@@ -1,23 +1,44 @@
 from flask import Flask, request, jsonify, render_template, send_from_directory
-import json, os, base64
+import sqlite3, os, base64
 
 app = Flask(__name__)
 
-# Use /tmp on Render (always writable), fallback to project folder locally
-USERS_FILE = os.environ.get("USERS_FILE", os.path.join(os.path.dirname(__file__), "users.json"))
-SUGGESTIONS_FILE = os.environ.get("SUGGESTIONS_FILE", os.path.join(os.path.dirname(__file__), "suggestions.json"))
-
-# On Render, set USERS_FILE=/tmp/users.json in Environment Variables
-
-def load_json(file):
-    if not os.path.exists(file): return {}
-    with open(file,"r") as f: return json.load(f)
-
-def save_json(file, data):
-    with open(file,"w") as f: json.dump(data,f,indent=2)
+# -------------------
+# Config
+# -------------------
+DB_FILE = "gamemode.db"  # SQLite database file
 
 def encode_pw(pw):
     return base64.b64encode(pw.encode()).decode()
+
+# -------------------
+# Database setup
+# -------------------
+def init_db():
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    # Users table
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            username TEXT PRIMARY KEY,
+            password TEXT NOT NULL,
+            tier TEXT NOT NULL
+        )
+    """)
+    # Suggestions table
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS suggestions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            idea TEXT NOT NULL,
+            email TEXT,
+            status TEXT NOT NULL DEFAULT 'pending'
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+init_db()
 
 # -------------------
 # Routes
@@ -31,7 +52,8 @@ def index():
 @app.route("/list-games/<tier>")
 def list_games(tier):
     folder = tier.lower()
-    if not os.path.exists(folder): return jsonify({"games":[]})
+    if not os.path.exists(folder): 
+        return jsonify({"games":[]})
     files = [f.replace(".html","") for f in os.listdir(folder) if f.endswith(".html")]
     return jsonify({"games": files})
 
@@ -43,39 +65,53 @@ def register():
     data = request.get_json()
     username = data.get("username")
     password = data.get("password")
-    if not username or not password: return jsonify({"success":False,"message":"Enter username & password"})
-    
-    users = load_json(USERS_FILE)
-    if username in users: return jsonify({"success":False,"message":"User already exists"})
-    
-    users[username] = {"password": encode_pw(password), "tier":"demo"}
-    save_json(USERS_FILE, users)
-    return jsonify({"success":True,"message":"Registered! You are on demo tier."})
+    if not username or not password:
+        return jsonify({"success": False, "message": "Enter username & password"})
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("SELECT username FROM users WHERE username = ?", (username,))
+    if c.fetchone():
+        conn.close()
+        return jsonify({"success": False, "message": "User already exists"})
+
+    c.execute("INSERT INTO users (username, password, tier) VALUES (?, ?, ?)",
+              (username, encode_pw(password), "demo"))
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True, "message": "Registered! You are on demo tier."})
 
 @app.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
     username = data.get("username")
     password = data.get("password")
-    users = load_json(USERS_FILE)
-    if username not in users: return jsonify({"success":False,"message":"User not found"})
-    if users[username]["password"] != encode_pw(password):
-        return jsonify({"success":False,"message":"Incorrect password"})
-    return jsonify({"success":True,"plan":users[username]["tier"]})
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("SELECT password, tier FROM users WHERE username = ?", (username,))
+    row = c.fetchone()
+    conn.close()
+    if not row:
+        return jsonify({"success": False, "message": "User not found"})
+    pw, tier = row
+    if pw != encode_pw(password):
+        return jsonify({"success": False, "message": "Incorrect password"})
+    return jsonify({"success": True, "plan": tier})
 
 # -------------------
-# Fake PayPal webhook
+# PayPal webhook
 # -------------------
 @app.route("/paypal-webhook", methods=["POST"])
 def paypal_webhook():
     data = request.get_json()
     username = data.get("username")
     tier = data.get("plan")
-    users = load_json(USERS_FILE)
-    if username not in users: return jsonify({"success":False,"message":"User not found"})
-    users[username]["tier"] = tier
-    save_json(USERS_FILE, users)
-    return jsonify({"success":True,"message":"Subscription updated"})
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("UPDATE users SET tier=? WHERE username=?", (tier, username))
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True, "message": "Subscription updated"})
 
 # -------------------
 # Game suggestions ($5)
@@ -83,20 +119,29 @@ def paypal_webhook():
 @app.route("/suggestion", methods=["POST"])
 def suggestion():
     data = request.get_json()
-    user = data.get("username")
+    username = data.get("username")
     idea = data.get("idea")
     email = data.get("email","")
-    if not user or not idea: return jsonify({"success":False,"message":"Username & idea required"})
-    
-    users = load_json(USERS_FILE)
-    if users[user]["tier"]=="demo":
-        return jsonify({"success":False,"message":"Upgrade to submit a suggestion"})
-    
-    suggestions = load_json(SUGGESTIONS_FILE)
-    if user not in suggestions: suggestions[user]=[]
-    suggestions[user].append({"idea":idea,"email":email,"status":"pending"})
-    save_json(SUGGESTIONS_FILE, suggestions)
-    return jsonify({"success":True,"message":"Suggestion submitted!"})
+    if not username or not idea:
+        return jsonify({"success": False, "message": "Username & idea required"})
+
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("SELECT tier FROM users WHERE username=?", (username,))
+    row = c.fetchone()
+    if not row:
+        conn.close()
+        return jsonify({"success": False, "message": "User not found"})
+    tier = row[0]
+    if tier == "demo":
+        conn.close()
+        return jsonify({"success": False, "message": "Upgrade to submit a suggestion"})
+
+    c.execute("INSERT INTO suggestions (username, idea, email) VALUES (?, ?, ?)",
+              (username, idea, email))
+    conn.commit()
+    conn.close()
+    return jsonify({"success": True, "message": "Suggestion submitted!"})
 
 # -------------------
 # Serve games
@@ -110,5 +155,5 @@ def serve_game(tier, filename):
 # Run
 # -------------------
 if __name__=="__main__":
-    port = int(os.environ.get("PORT", 5000))  # Use Render's PORT, fallback to 5000 locally
-app.run(host="0.0.0.0", port=port, debug=True, use_reloader=False)
+    port = int(os.environ.get("PORT", 5000))  # Render uses PORT, fallback 5000 locally
+    app.run(host="0.0.0.0", port=port, debug=True, use_reloader=False)
