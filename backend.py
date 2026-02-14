@@ -11,7 +11,7 @@ def encode_pw(pw):
     return base64.b64encode(pw.encode()).decode()
 
 # -------------------
-# Initialize DB
+# Initialize DB test message
 # -------------------
 def init_db():
     conn = psycopg2.connect(DATABASE_URL)
