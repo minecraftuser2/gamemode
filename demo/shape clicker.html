@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Shape Clicker</title>
+<style>
+body { margin:0; overflow:hidden; background:#111; }
+.shape { position:absolute; width:40px; height:40px; cursor:pointer; }
+#score { position:fixed; top:10px; left:10px; color:white; font-size:20px; }
+</style>
+</head>
+<body>
+<div id="score">Score:0</div>
+<script>
+let score=0;
+function spawnShape(){
+    let s = document.createElement("div");
+    s.className="shape";
+    s.style.background="hsl("+Math.random()*360+",100%,50%)";
+    s.style.borderRadius = Math.random()>0.5 ? "50%" : "0%";
+    s.style.left = Math.random()*(window.innerWidth-40)+"px";
+    s.style.top = Math.random()*(window.innerHeight-40)+"px";
+    document.body.appendChild(s);
+    s.onclick = ()=> { score++; document.getElementById("score").innerText="Score:"+score; s.remove(); spawnShape(); };
+}
+spawnShape();
+</script>
+</body>
+</html>
