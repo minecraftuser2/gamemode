@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, render_template, send_from_directory
-import sqlite3, os, base64
+import sqlite3, os, base64, smtplib
+from email.message import EmailMessage
 
 app = Flask(__name__)
 
@@ -7,6 +8,11 @@ app = Flask(__name__)
 # Config
 # -------------------
 DB_FILE = "gamemode.db"  # SQLite database file
+
+# Email settings (update with your info)
+EMAIL_ADDRESS = "youremail@example.com"  # sender email
+EMAIL_PASSWORD = "your-app-password"     # app-specific password or SMTP password
+EMAIL_RECEIVER = "youremail@example.com" # where suggestions go
 
 def encode_pw(pw):
     return base64.b64encode(pw.encode()).decode()
@@ -52,7 +58,7 @@ def index():
 @app.route("/list-games/<tier>")
 def list_games(tier):
     folder = tier.lower()
-    if not os.path.exists(folder): 
+    if not os.path.exists(folder):
         return jsonify({"games":[]})
     files = [f.replace(".html","") for f in os.listdir(folder) if f.endswith(".html")]
     return jsonify({"games": files})
@@ -125,6 +131,7 @@ def suggestion():
     if not username or not idea:
         return jsonify({"success": False, "message": "Username & idea required"})
 
+    # Check user tier
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
     c.execute("SELECT tier FROM users WHERE username=?", (username,))
@@ -137,10 +144,26 @@ def suggestion():
         conn.close()
         return jsonify({"success": False, "message": "Upgrade to submit a suggestion"})
 
+    # Save suggestion in DB
     c.execute("INSERT INTO suggestions (username, idea, email) VALUES (?, ?, ?)",
               (username, idea, email))
     conn.commit()
     conn.close()
+
+    # Send email notification
+    try:
+        msg = EmailMessage()
+        msg['Subject'] = f'New Game Suggestion from {username}'
+        msg['From'] = "SuggestionBot@gmail.com"
+        msg['To'] = "gamemodeSuggestions@gmail.com"
+        msg.set_content(f"Username: {username}\nEmail: {email}\nIdea: {idea}")
+
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+            smtp.login(EMAIL_ADDRESS, EMAIL_PASSWORD)
+            smtp.send_message(msg)
+    except Exception as e:
+        print("Error sending email:", e)
+
     return jsonify({"success": True, "message": "Suggestion submitted!"})
 
 # -------------------
