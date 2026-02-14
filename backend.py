@@ -107,5 +107,5 @@ def serve_game(tier, filename):
 # Run
 # -------------------
 if __name__=="__main__":
-    port = int(os.environ.get("PORT", 5000))  # Use Render's PORT, fallback to 5000 locally
-    app.run(host="0.0.0.0", port=port, debug=True)
+    port = int(os.environ.get("PORT", 10000))  # Use Render's PORT, fallback to 5000 locally
+app.run(host="0.0.0.0", port=port, debug=True, use_reloader=False)
