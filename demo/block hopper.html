@@ -4,28 +4,46 @@
 <title>Block Hopper</title>
 <style>
 body { margin:0; overflow:hidden; background:#222; }
-#player { position:absolute; width:30px; height:30px; background:#f00; bottom:0; left:50px; }
-.block { position:absolute; width:30px; height:30px; background:#0f0; bottom:0; }
+#player {
+    position:absolute;
+    width:30px;
+    height:30px;
+    background:#f00;
+    bottom:0;
+    left:50px;
+}
+.block {
+    position:absolute;
+    width:30px;
+    height:30px;
+    background:#0f0;
+    bottom:0;
+}
 </style>
 </head>
 <body>
 <div id="player"></div>
+
 <script>
 let player = document.getElementById("player");
-let playerY = 0;
+
+let playerY = 0;   // height from ground
 let vy = 0;
-let gravity = 0.5;
+let gravity = -0.6;   // negative pulls DOWN (because bottom positioning)
 let jumping = false;
 
-// jump
+const ground = 0;
+const playerSize = 30;
+
+// JUMP
 document.addEventListener("keydown", e=>{
     if(e.code=="Space" && !jumping){
-        vy = 10;
+        vy = 12;      // positive goes UP with bottom positioning
         jumping = true;
     }
 });
 
-// create moving block
+// Create moving block
 function createBlock(){
     let b = document.createElement("div");
     b.className="block";
@@ -36,26 +54,49 @@ function createBlock(){
 
 let blocks = [createBlock()];
 
+function collide(px, py, bx, by){
+    return (
+        px < bx + 30 &&
+        px + 30 > bx &&
+        py < by + 30 &&
+        py + 30 > by
+    );
+}
+
 function gameLoop(){
-    // player physics
+
+    // PHYSICS
     vy += gravity;
     playerY += vy;
-    if(playerY>0){ playerY=0; vy=0; jumping=false; }
+
+    if(playerY <= ground){
+        playerY = ground;
+        vy = 0;
+        jumping = false;
+    }
+
     player.style.bottom = playerY + "px";
 
-    // blocks movement
+    // BLOCKS
     blocks.forEach((b,i)=>{
         let x = parseInt(b.style.left);
-        x -= 5;
-        if(x<-30){ b.remove(); blocks.splice(i,1); blocks.push(createBlock()); }
-        else b.style.left = x + "px";
+        x -= 6;
 
-        // collision detection
-        let px = parseInt(player.style.left);
+        if(x < -30){
+            b.remove();
+            blocks.splice(i,1);
+            blocks.push(createBlock());
+        } else {
+            b.style.left = x + "px";
+        }
+
+        // Collision
+        let px = 50;
         let py = playerY;
         let bx = x;
         let by = 0;
-        if(px < bx+30 && px+30 > bx && py < 30){
+
+        if(collide(px, py, bx, by)){
             alert("Game Over!");
             location.reload();
         }
