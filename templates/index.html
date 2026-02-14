@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Gamemode Prototype</title>
+<style>
+body { font-family: Arial; background:#1e1e2f; color:#fff; text-align:center; margin:0; padding:0; }
+header { background:#282842; padding:20px; font-size:2em; font-weight:bold; }
+.container { max-width:900px; margin:20px auto; }
+h2 { color:#ffcc00; margin-top:30px; }
+.game-list, .plans { display:flex; flex-wrap:wrap; justify-content:center; gap:15px; margin:20px 0; }
+.game, .plan { background:#2e2e4f; padding:15px; border-radius:10px; width:200px; }
+.game button, .plan button { margin-top:10px; padding:8px 12px; border:none; border-radius:5px; cursor:pointer; }
+button.demo { background:#4caf50; color:#fff; }
+button.general { background:#2196f3; color:#fff; }
+button.vip { background:#ff9800; color:#fff; }
+.locked { opacity:0.5; pointer-events:none; }
+input { padding:5px; margin:5px; border-radius:5px; border:none; }
+</style>
+</head>
+<body>
+
+<header>GAMEMODE</header>
+<div class="container">
+
+<!-- Login / Register -->
+<h2>Account</h2>
+<div id="account">
+  <input type="text" id="username" placeholder="Username">
+  <input type="password" id="password" placeholder="Password">
+  <button onclick="register()">Register</button>
+  <button onclick="login()">Login</button>
+</div>
+<p id="account-msg"></p>
+
+<!-- Games -->
+<h2>Demo Games (Free)</h2>
+<div class="game-list" id="demoGames"></div>
+
+<h2>General Games</h2>
+<div class="game-list" id="generalGames"></div>
+
+<h2>VIP Games</h2>
+<div class="game-list" id="vipGames"></div>
+
+<!-- Subscription Plans -->
+<h2>Subscription Plans</h2>
+<div class="plans">
+  <div class="plan">
+    <strong>General Plan</strong><br>
+    $3/month<br>
+    Full access to General games<br>
+    <button class="general" onclick="fakePay('general')">Subscribe (PayPal)</button>
+  </div>
+  <div class="plan">
+    <strong>VIP Plan</strong><br>
+    $3/month + early access<br>
+    Full access + VIP games<br>
+    <button class="vip" onclick="fakePay('vip')">Subscribe (PayPal)</button>
+  </div>
+</div>
+
+<!-- Game Suggestion ($5) -->
+<h2>Request a Game Idea ($5)</h2>
+<div>
+  <input type="text" id="suggestion" placeholder="Your game idea">
+  <button onclick="submitSuggestion()">Submit</button>
+</div>
+<p id="suggestion-msg"></p>
+
+<script>
+let username = "";
+let plan = "demo";
+
+// -------------------
+// Account functions
+// -------------------
+function register(){
+    username = document.getElementById("username").value;
+    let password = document.getElementById("password").value;
+    fetch("/register",{
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({username, password, plan})
+    }).then(r=>r.json()).then(res=>{
+        document.getElementById("account-msg").innerText = res.message;
+        if(res.success) loadGames();
+    });
+}
+
+function login(){
+    username = document.getElementById("username").value;
+    let password = document.getElementById("password").value;
+    fetch("/login",{
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({username,password})
+    }).then(r=>r.json()).then(res=>{
+        if(res.success){
+            plan = res.plan;
+            document.getElementById("account-msg").innerText = "Logged in! Plan: "+plan;
+            loadGames();
+        } else {
+            document.getElementById("account-msg").innerText = res.message;
+        }
+    });
+}
+
+// -------------------
+// Load games dynamically
+// -------------------
+function loadGames(){
+    ["demo","general","VIP"].forEach(tier=>{
+        fetch("/list-games/"+tier)
+        .then(r=>r.json())
+        .then(res=>{
+            let container = document.getElementById(tier.toLowerCase()+"Games");
+            container.innerHTML = "";
+            res.games.forEach(g=>{
+                let div = document.createElement("div");
+                div.classList.add("game");
+                let btn = document.createElement("button");
+                btn.innerText = "Play";
+                btn.onclick = ()=> window.open(`/games/${tier}/${g}.html`,"_blank");
+
+                // Lock logic
+                if(tier=="general" && plan!="general" && plan!="vip") { btn.disabled=true; div.classList.add("locked"); }
+                if(tier=="VIP" && plan!="vip") { btn.disabled=true; div.classList.add("locked"); }
+
+                div.innerHTML = g+"<br>";
+                div.appendChild(btn);
+                container.appendChild(div);
+            });
+        });
+    });
+}
+
+// -------------------
+// Fake PayPal buttons
+// -------------------
+function fakePay(type){
+    if(!username){ alert("Login first!"); return; }
+    fetch("/paypal-webhook",{
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({username, plan:type})
+    }).then(r=>r.json()).then(res=>{
+        if(res.success){
+            plan = type;
+            alert("Subscription updated to "+type);
+            loadGames();
+        }
+    });
+}
+
+// -------------------
+// Game suggestion
+// -------------------
+function submitSuggestion(){
+    let idea = document.getElementById("suggestion").value;
+    if(!username){ alert("Login first!"); return; }
+    fetch("/suggestion",{
+        method:"POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({username, idea})
+    }).then(r=>r.json()).then(res=>{
+        document.getElementById("suggestion-msg").innerText = res.message;
+    });
+}
+
+// Load games on page load (for demo users)
+loadGames();
+
+</script>
+</div>
+</body>
+</html>
