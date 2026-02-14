@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Dodge Blocks</title>
+<style>
+body {
+    margin: 0;
+    background: black;
+    overflow: hidden;
+}
+canvas {
+    display: block;
+    margin: auto;
+    background: #111;
+}
+</style>
+</head>
+<body>
+
+<canvas id="game" width="400" height="600"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let player = {
+    x: 180,
+    y: 550,
+    w: 40,
+    h: 40,
+    speed: 6
+};
+
+let blocks = [];
+let score = 0;
+let gameOver = false;
+
+let keys = {};
+
+document.addEventListener("keydown", e => {
+    keys[e.key.toLowerCase()] = true;
+});
+document.addEventListener("keyup", e => {
+    keys[e.key.toLowerCase()] = false;
+});
+
+function spawnBlock() {
+    let x = Math.random() * (canvas.width - 40);
+    blocks.push({ x: x, y: -40, w: 40, h: 40 });
+}
+setInterval(spawnBlock, 1000);
+
+function collide(a, b) {
+    return a.x < b.x + b.w &&
+           a.x + a.w > b.x &&
+           a.y < b.y + b.h &&
+           a.y + a.h > b.y;
+}
+
+function update() {
+    if (gameOver) return;
+
+    if (keys["arrowleft"] || keys["a"]) {
+        player.x -= player.speed;
+    }
+    if (keys["arrowright"] || keys["d"]) {
+        player.x += player.speed;
+    }
+
+    // keep inside screen
+    if (player.x < 0) player.x = 0;
+    if (player.x > canvas.width - player.w)
+        player.x = canvas.width - player.w;
+
+    // move blocks
+    for (let block of blocks) {
+        block.y += 4;
+
+        if (collide(player, block)) {
+            gameOver = true;
+        }
+    }
+
+    blocks = blocks.filter(b => b.y < canvas.height);
+
+    score++;
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // player
+    ctx.fillStyle = "lime";
+    ctx.fillRect(player.x, player.y, player.w, player.h);
+
+    // blocks
+    ctx.fillStyle = "red";
+    for (let block of blocks) {
+        ctx.fillRect(block.x, block.y, block.w, block.h);
+    }
+
+    // score
+    ctx.fillStyle = "white";
+    ctx.font = "20px Arial";
+    ctx.fillText("Score: " + score, 10, 30);
+
+    if (gameOver) {
+        ctx.fillStyle = "white";
+        ctx.font = "40px Arial";
+        ctx.fillText("Game Over", 100, 300);
+    }
+}
+
+function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+
+</body>
+</html>
