@@ -3,8 +3,8 @@ import json, os, base64
 
 app = Flask(__name__)
 
-USERS_FILE = "users.json"
-SUGGESTIONS_FILE = "suggestions.json"
+USERS_FILE = os.path.join(os.path.dirname(__file__), "users.json")
+SUGGESTIONS_FILE = os.path.join(os.path.dirname(__file__), "suggestions.json")
 
 def load_json(file):
     if not os.path.exists(file): return {}
