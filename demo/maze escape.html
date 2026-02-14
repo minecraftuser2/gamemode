@@ -3,45 +3,140 @@
 <head>
 <title>Maze Escape</title>
 <style>
-body { margin:0; }
-canvas { background:#222; display:block; margin:0 auto; }
+body {
+    margin: 0;
+    background: black;
+}
+canvas {
+    display: block;
+    margin: auto;
+    background: #111;
+}
 </style>
 </head>
 <body>
-<canvas id="game" width="400" height="400"></canvas>
-<script>
-const c = document.getElementById("game");
-const ctx = c.getContext("2d");
 
-let player = {x:20,y:20,size:20};
-let goal = {x:360,y:360,size:20};
-let walls = [
-    {x:0,y:100,w:300,h:20},
-    {x:100,y:200,w:300,h:20},
-    {x:0,y:300,w:300,h:20}
+<canvas id="game" width="500" height="500"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const tileSize = 50;
+
+const maze = [
+    [1,1,1,1,1,1,1,1,1,1],
+    [1,0,0,0,1,0,0,0,0,1],
+    [1,0,1,0,1,0,1,1,0,1],
+    [1,0,1,0,0,0,0,1,0,1],
+    [1,0,1,1,1,1,0,1,0,1],
+    [1,0,0,0,0,1,0,1,0,1],
+    [1,1,1,1,0,1,0,1,0,1],
+    [1,0,0,1,0,0,0,1,0,1],
+    [1,0,0,0,0,1,0,0,2,1],
+    [1,1,1,1,1,1,1,1,1,1]
 ];
 
-document.addEventListener("keydown", e=>{
-    let dx=0, dy=0;
-    if(e.key=="ArrowUp") dy=-5;
-    if(e.key=="ArrowDown") dy=5;
-    if(e.key=="ArrowLeft") dx=-5;
-    if(e.key=="ArrowRight") dx=5;
-    let next = {x:player.x+dx, y:player.y+dy, size:player.size};
-    if(!walls.some(w=>next.x+next.size>w.x && next.x<w.x+w.w && next.y+next.size>w.y && next.y<w.y+w.h))
-        { player = next; }
-    if(player.x<goal.x+goal.size && player.x+player.size>goal.x && player.y<goal.y+goal.size && player.y+player.size>goal.y)
-        { alert("You Escaped!"); location.reload(); }
+// 1 = wall
+// 0 = floor
+// 2 = goal
+
+let player = {
+    x: tileSize + 5,
+    y: tileSize + 5,
+    size: 40,
+    speed: 4
+};
+
+let keys = {};
+
+document.addEventListener("keydown", e => {
+    keys[e.key.toLowerCase()] = true;
+});
+document.addEventListener("keyup", e => {
+    keys[e.key.toLowerCase()] = false;
 });
 
-function draw(){
-    ctx.clearRect(0,0,400,400);
-    ctx.fillStyle="lime"; ctx.fillRect(player.x,player.y,player.size,player.size);
-    ctx.fillStyle="red"; ctx.fillRect(goal.x,goal.y,goal.size,goal.size);
-    ctx.fillStyle="white"; walls.forEach(w=>ctx.fillRect(w.x,w.y,w.w,w.h));
-    requestAnimationFrame(draw);
+function isWall(x, y) {
+    let col = Math.floor(x / tileSize);
+    let row = Math.floor(y / tileSize);
+
+    if (maze[row] && maze[row][col] === 1) {
+        return true;
+    }
+    return false;
 }
-draw();
+
+function checkGoal() {
+    let col = Math.floor(player.x / tileSize);
+    let row = Math.floor(player.y / tileSize);
+
+    if (maze[row][col] === 2) {
+        alert("You escaped!");
+        location.reload();
+    }
+}
+
+function update() {
+    let newX = player.x;
+    let newY = player.y;
+
+    if (keys["arrowleft"] || keys["a"]) newX -= player.speed;
+    if (keys["arrowright"] || keys["d"]) newX += player.speed;
+    if (keys["arrowup"] || keys["w"]) newY -= player.speed;
+    if (keys["arrowdown"] || keys["s"]) newY += player.speed;
+
+    // Check collision on all 4 corners
+    let corners = [
+        [newX, newY],
+        [newX + player.size, newY],
+        [newX, newY + player.size],
+        [newX + player.size, newY + player.size]
+    ];
+
+    let blocked = false;
+    for (let corner of corners) {
+        if (isWall(corner[0], corner[1])) {
+            blocked = true;
+        }
+    }
+
+    if (!blocked) {
+        player.x = newX;
+        player.y = newY;
+    }
+
+    checkGoal();
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (let row = 0; row < maze.length; row++) {
+        for (let col = 0; col < maze[row].length; col++) {
+            if (maze[row][col] === 1) {
+                ctx.fillStyle = "#444";
+                ctx.fillRect(col * tileSize, row * tileSize, tileSize, tileSize);
+            }
+            if (maze[row][col] === 2) {
+                ctx.fillStyle = "lime";
+                ctx.fillRect(col * tileSize, row * tileSize, tileSize, tileSize);
+            }
+        }
+    }
+
+    ctx.fillStyle = "cyan";
+    ctx.fillRect(player.x, player.y, player.size, player.size);
+}
+
+function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+}
+
+loop();
 </script>
+
 </body>
 </html>
