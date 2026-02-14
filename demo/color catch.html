@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Color Catch</title>
+<style>
+body { margin:0; background:#111; overflow:hidden; }
+.block { position:absolute; width:40px; height:40px; cursor:pointer; }
+#score { position:fixed; top:10px; left:10px; color:white; font-size:20px; }
+</style>
+</head>
+<body>
+<div id="score">Score:0</div>
+<script>
+let score = 0;
+
+function spawnBlock(){
+    let b = document.createElement("div");
+    b.className="block";
+    b.style.background="hsl("+Math.random()*360+",100%,50%)";
+    b.style.left = Math.random()*(window.innerWidth-40)+"px";
+    b.style.top = "0px";
+    document.body.appendChild(b);
+    b.onclick = ()=> { score++; document.getElementById("score").innerText="Score:"+score; b.remove(); };
+    return b;
+}
+
+let blocks = [spawnBlock()];
+
+function loop(){
+    blocks.forEach((b,i)=>{
+        let t = parseInt(b.style.top);
+        t +=3;
+        if(t>window.innerHeight){ b.remove(); blocks.splice(i,1); blocks.push(spawnBlock()); }
+        else b.style.top = t + "px";
+    });
+    requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
