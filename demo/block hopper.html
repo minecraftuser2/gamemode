@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Block Hopper</title>
+<style>
+body { margin:0; overflow:hidden; background:#222; }
+#player { position:absolute; width:30px; height:30px; background:#f00; bottom:0; left:50px; }
+.block { position:absolute; width:30px; height:30px; background:#0f0; bottom:0; }
+</style>
+</head>
+<body>
+<div id="player"></div>
+<script>
+let player = document.getElementById("player");
+let playerY = 0;
+let vy = 0;
+let gravity = 0.5;
+let jumping = false;
+
+// jump
+document.addEventListener("keydown", e=>{
+    if(e.code=="Space" && !jumping){
+        vy = -10;
+        jumping = true;
+    }
+});
+
+// create moving block
+function createBlock(){
+    let b = document.createElement("div");
+    b.className="block";
+    b.style.left = window.innerWidth + "px";
+    document.body.appendChild(b);
+    return b;
+}
+
+let blocks = [createBlock()];
+
+function gameLoop(){
+    // player physics
+    vy += gravity;
+    playerY += vy;
+    if(playerY>0){ playerY=0; vy=0; jumping=false; }
+    player.style.bottom = playerY + "px";
+
+    // blocks movement
+    blocks.forEach((b,i)=>{
+        let x = parseInt(b.style.left);
+        x -= 5;
+        if(x<-30){ b.remove(); blocks.splice(i,1); blocks.push(createBlock()); }
+        else b.style.left = x + "px";
+
+        // collision detection
+        let px = parseInt(player.style.left);
+        let py = playerY;
+        let bx = x;
+        let by = 0;
+        if(px < bx+30 && px+30 > bx && py < 30){
+            alert("Game Over!");
+            location.reload();
+        }
+    });
+
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+</body>
+</html>
