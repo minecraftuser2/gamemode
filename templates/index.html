@@ -23,7 +23,6 @@ input { padding:5px; margin:5px; border-radius:5px; border:none; }
 <header>GAMEMODE</header>
 <div class="container">
 
-<!-- Login / Register -->
 <h2>Account</h2>
 <div id="account">
   <input type="text" id="username" placeholder="Username">
@@ -33,7 +32,6 @@ input { padding:5px; margin:5px; border-radius:5px; border:none; }
 </div>
 <p id="account-msg"></p>
 
-<!-- Games -->
 <h2>Demo Games (Free)</h2>
 <div class="game-list" id="demoGames"></div>
 
@@ -43,7 +41,6 @@ input { padding:5px; margin:5px; border-radius:5px; border:none; }
 <h2>VIP Games</h2>
 <div class="game-list" id="vipGames"></div>
 
-<!-- Subscription Plans -->
 <h2>Subscription Plans</h2>
 <div class="plans">
   <div class="plan">
@@ -60,10 +57,10 @@ input { padding:5px; margin:5px; border-radius:5px; border:none; }
   </div>
 </div>
 
-<!-- Game Suggestion ($5) -->
 <h2>Request a Game Idea ($5)</h2>
 <div>
   <input type="text" id="suggestion" placeholder="Your game idea">
+  <input type="email" id="email" placeholder="Your email (optional)">
   <button onclick="submitSuggestion()">Submit</button>
 </div>
 <p id="suggestion-msg"></p>
@@ -72,106 +69,59 @@ input { padding:5px; margin:5px; border-radius:5px; border:none; }
 let username = "";
 let plan = "demo";
 
-// -------------------
-// Account functions
-// -------------------
 function register(){
     username = document.getElementById("username").value;
     let password = document.getElementById("password").value;
-    fetch("/register",{
-        method:"POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({username, password, plan})
-    }).then(r=>r.json()).then(res=>{
-        document.getElementById("account-msg").innerText = res.message;
-        if(res.success) loadGames();
-    });
+    fetch("/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password})})
+    .then(r=>r.json()).then(res=>{ document.getElementById("account-msg").innerText=res.message; if(res.success) loadGames(); });
 }
 
 function login(){
     username = document.getElementById("username").value;
     let password = document.getElementById("password").value;
-    fetch("/login",{
-        method:"POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({username,password})
-    }).then(r=>r.json()).then(res=>{
-        if(res.success){
-            plan = res.plan;
-            document.getElementById("account-msg").innerText = "Logged in! Plan: "+plan;
-            loadGames();
-        } else {
-            document.getElementById("account-msg").innerText = res.message;
-        }
-    });
+    fetch("/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,password})})
+    .then(r=>r.json()).then(res=>{ if(res.success){ plan=res.plan; document.getElementById("account-msg").innerText="Logged in! Plan: "+plan; loadGames(); } else { document.getElementById("account-msg").innerText=res.message; } });
 }
 
-// -------------------
-// Load games dynamically
-// -------------------
 function loadGames(){
     ["demo","general","VIP"].forEach(tier=>{
-        fetch("/list-games/"+tier)
-        .then(r=>r.json())
-        .then(res=>{
+        fetch("/list-games/"+tier).then(r=>r.json()).then(res=>{
             let container = document.getElementById(tier.toLowerCase()+"Games");
-            container.innerHTML = "";
+            container.innerHTML="";
             res.games.forEach(g=>{
-                let div = document.createElement("div");
-                div.classList.add("game");
-                let btn = document.createElement("button");
-                btn.innerText = "Play";
-                btn.onclick = ()=> window.open(`/games/${tier}/${g}.html`,"_blank");
-
-                // Lock logic
+                let div = document.createElement("div"); div.classList.add("game");
+                let btn = document.createElement("button"); btn.innerText="Play"; btn.onclick=()=>window.open(`/games/${tier}/${g}.html`,"_blank");
                 if(tier=="general" && plan!="general" && plan!="vip") { btn.disabled=true; div.classList.add("locked"); }
                 if(tier=="VIP" && plan!="vip") { btn.disabled=true; div.classList.add("locked"); }
-
-                div.innerHTML = g+"<br>";
-                div.appendChild(btn);
-                container.appendChild(div);
+                div.innerHTML=g+"<br>"; div.appendChild(btn); container.appendChild(div);
             });
         });
     });
 }
 
-// -------------------
-// Fake PayPal buttons
-// -------------------
 function fakePay(type){
     if(!username){ alert("Login first!"); return; }
-    fetch("/paypal-webhook",{
-        method:"POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({username, plan:type})
-    }).then(r=>r.json()).then(res=>{
-        if(res.success){
-            plan = type;
-            alert("Subscription updated to "+type);
-            loadGames();
-        }
-    });
+    fetch("/paypal-webhook",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,plan:type})})
+    .then(r=>r.json()).then(res=>{ if(res.success){ plan=type; alert("Subscription updated to "+type); loadGames(); } });
 }
 
-// -------------------
-// Game suggestion
-// -------------------
 function submitSuggestion(){
     let idea = document.getElementById("suggestion").value;
+    let email = document.getElementById("email").value;
     if(!username){ alert("Login first!"); return; }
-    fetch("/suggestion",{
-        method:"POST",
-        headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({username, idea})
-    }).then(r=>r.json()).then(res=>{
-        document.getElementById("suggestion-msg").innerText = res.message;
+    if(!idea){ alert("Enter an idea!"); return; }
+    fetch("/suggestion",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username,idea,email})})
+    .then(r=>r.json()).then(res=>{
+        document.getElementById("suggestion-msg").innerText=res.message;
+        document.getElementById("suggestion").value="";
+        document.getElementById("email").value="";
     });
 }
 
-// Load games on page load (for demo users)
+// Load demo games immediately
 loadGames();
-
 </script>
+
 </div>
 </body>
 </html>
