@@ -3,8 +3,11 @@ import json, os, base64
 
 app = Flask(__name__)
 
-USERS_FILE = os.path.join(os.path.dirname(__file__), "users.json")
-SUGGESTIONS_FILE = os.path.join(os.path.dirname(__file__), "suggestions.json")
+# Use /tmp on Render (always writable), fallback to project folder locally
+USERS_FILE = os.environ.get("USERS_FILE", os.path.join(os.path.dirname(__file__), "users.json"))
+SUGGESTIONS_FILE = os.environ.get("SUGGESTIONS_FILE", os.path.join(os.path.dirname(__file__), "suggestions.json"))
+
+# On Render, set USERS_FILE=/tmp/users.json in Environment Variables
 
 def load_json(file):
     if not os.path.exists(file): return {}
