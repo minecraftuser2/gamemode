@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Territory Wars</title>
+<style>
+body {
+  text-align: center;
+  font-family: Arial;
+  background: #222;
+  color: white;
+}
+
+#grid {
+  display: grid;
+  grid-template-columns: repeat(10, 30px);
+  gap: 2px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.cell {
+  width: 30px;
+  height: 30px;
+  background: #555;
+  cursor: pointer;
+}
+
+.blue { background: blue; }
+.red { background: red; }
+
+button {
+  margin-top: 15px;
+  padding: 8px 16px;
+}
+</style>
+</head>
+<body>
+
+<h1>Territory Wars</h1>
+<div id="grid"></div>
+<p id="status"></p>
+<button onclick="resetGame()">Restart</button>
+
+<script>
+const grid = document.getElementById("grid");
+const statusText = document.getElementById("status");
+
+let cells = [];
+let playerCount = 0;
+let aiCount = 0;
+
+function createGrid() {
+  grid.innerHTML = "";
+  cells = [];
+  playerCount = 0;
+  aiCount = 0;
+  statusText.textContent = "";
+
+  for (let i = 0; i < 100; i++) {
+    let cell = document.createElement("div");
+    cell.classList.add("cell");
+
+    cell.onclick = () => claimCell(cell);
+
+    grid.appendChild(cell);
+    cells.push(cell);
+  }
+}
+
+function claimCell(cell) {
+  if (cell.classList.contains("blue") || cell.classList.contains("red")) return;
+
+  cell.classList.add("blue");
+  playerCount++;
+  aiTurn();
+  checkWin();
+}
+
+function aiTurn() {
+  let emptyCells = cells.filter(c => 
+    !c.classList.contains("blue") && !c.classList.contains("red")
+  );
+
+  if (emptyCells.length === 0) return;
+
+  let choice = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+  choice.classList.add("red");
+  aiCount++;
+}
+
+function checkWin() {
+  if (playerCount >= 60) {
+    statusText.textContent = "You Win!";
+  } else if (aiCount >= 60) {
+    statusText.textContent = "AI Wins!";
+  }
+}
+
+function resetGame() {
+  createGrid();
+}
+
+createGrid();
+</script>
+
+</body>
+</html>
