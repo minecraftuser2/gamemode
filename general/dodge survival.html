@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dodge Survival</title>
+<style>
+body { margin:0; background:#111; color:white; text-align:center; font-family:Arial;}
+canvas { background:#222; display:block; margin:20px auto; }
+</style>
+</head>
+<body>
+
+<h1>Dodge Survival</h1>
+<p id="score">Time: 0</p>
+<canvas id="game" width="400" height="400"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const scoreText = document.getElementById("score");
+
+let player = {x:200,y:200,size:15};
+let enemies = [];
+let keys = {};
+let startTime = Date.now();
+let gameOver = false;
+
+document.addEventListener("keydown", e => keys[e.key]=true);
+document.addEventListener("keyup", e => keys[e.key]=false);
+
+function spawnEnemy(){
+  let edge = Math.floor(Math.random()*4);
+  let x,y;
+  if(edge===0){ x=0; y=Math.random()*400;}
+  if(edge===1){ x=400; y=Math.random()*400;}
+  if(edge===2){ x=Math.random()*400; y=0;}
+  if(edge===3){ x=Math.random()*400; y=400;}
+  enemies.push({x,y,size:12});
+}
+
+function update(){
+  if(gameOver) return;
+
+  ctx.clearRect(0,0,400,400);
+
+  // Move player
+  if(keys["ArrowUp"]||keys["w"]) player.y-=3;
+  if(keys["ArrowDown"]||keys["s"]) player.y+=3;
+  if(keys["ArrowLeft"]||keys["a"]) player.x-=3;
+  if(keys["ArrowRight"]||keys["d"]) player.x+=3;
+
+  player.x=Math.max(0,Math.min(400,player.x));
+  player.y=Math.max(0,Math.min(400,player.y));
+
+  // Draw player
+  ctx.fillStyle="cyan";
+  ctx.fillRect(player.x,player.y,player.size,player.size);
+
+  // Enemies
+  enemies.forEach(e=>{
+    let dx=player.x-e.x;
+    let dy=player.y-e.y;
+    let dist=Math.sqrt(dx*dx+dy*dy);
+    e.x+=dx/dist*1.5;
+    e.y+=dy/dist*1.5;
+
+    ctx.fillStyle="red";
+    ctx.fillRect(e.x,e.y,e.size,e.size);
+
+    if(Math.abs(e.x-player.x)<15 && Math.abs(e.y-player.y)<15){
+      gameOver=true;
+      alert("Game Over! Survived: "+Math.floor((Date.now()-startTime)/1000)+"s");
+    }
+  });
+
+  scoreText.textContent="Time: "+Math.floor((Date.now()-startTime)/1000);
+  requestAnimationFrame(update);
+}
+
+setInterval(spawnEnemy,2000);
+update();
+</script>
+
+</body>
+</html>
