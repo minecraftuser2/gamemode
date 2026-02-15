@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Energy Manager</title>
+<style>
+body { font-family:Arial; text-align:center; background:#222; color:white;}
+button { padding:10px 20px; margin:5px;}
+</style>
+</head>
+<body>
+
+<h1>Energy Manager</h1>
+<p>Production: <span id="prod">50</span></p>
+<p>Demand: <span id="demand">40</span></p>
+<p>Status: <span id="status">Stable</span></p>
+<p>Score: <span id="score">0</span></p>
+
+<button onclick="increase()">Increase Production</button>
+<button onclick="decrease()">Decrease Production</button>
+
+<script>
+let production=50;
+let demand=40;
+let score=0;
+
+function update(){
+  demand+=Math.random()*4-1;
+  demand=Math.max(10,demand);
+
+  if(production<demand){
+    document.getElementById("status").textContent="Blackout!";
+    score-=5;
+  }else if(production>demand+20){
+    document.getElementById("status").textContent="Overproduction!";
+    score-=2;
+  }else{
+    document.getElementById("status").textContent="Stable";
+    score+=3;
+  }
+
+  document.getElementById("prod").textContent=Math.floor(production);
+  document.getElementById("demand").textContent=Math.floor(demand);
+  document.getElementById("score").textContent=score;
+}
+
+function increase(){ production+=10; }
+function decrease(){ production-=10; }
+
+setInterval(update,2000);
+</script>
+
+</body>
+</html>
