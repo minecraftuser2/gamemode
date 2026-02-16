@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Flip</title>
+<style>
+body {
+  font-family: Arial;
+  text-align: center;
+  background: #222;
+  color: white;
+}
+#grid {
+  display: grid;
+  grid-template-columns: repeat(4, 60px);
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+.card {
+  width: 60px;
+  height: 60px;
+  background: #555;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  cursor: pointer;
+}
+.revealed {
+  background: #0af;
+}
+</style>
+</head>
+<body>
+
+<h1>Memory Flip</h1>
+<div id="grid"></div>
+<p id="status"></p>
+
+<script>
+let symbols = ["🍎","🍌","🍒","🍇","🍉","🥝","🍍","🍓"];
+let cards = [...symbols, ...symbols];
+cards.sort(() => Math.random() - 0.5);
+
+let grid = document.getElementById("grid");
+let first = null;
+let second = null;
+let lock = false;
+
+cards.forEach(symbol => {
+  let card = document.createElement("div");
+  card.className = "card";
+  card.dataset.symbol = symbol;
+
+  card.onclick = () => {
+    if (lock || card.classList.contains("revealed")) return;
+
+    card.textContent = symbol;
+    card.classList.add("revealed");
+
+    if (!first) {
+      first = card;
+    } else {
+      second = card;
+      lock = true;
+
+      if (first.dataset.symbol === second.dataset.symbol) {
+        first = null;
+        second = null;
+        lock = false;
+        checkWin();
+      } else {
+        setTimeout(() => {
+          first.textContent = "";
+          second.textContent = "";
+          first.classList.remove("revealed");
+          second.classList.remove("revealed");
+          first = null;
+          second = null;
+          lock = false;
+        }, 700);
+      }
+    }
+  };
+
+  grid.appendChild(card);
+});
+
+function checkWin() {
+  let all = document.querySelectorAll(".revealed");
+  if (all.length === cards.length) {
+    document.getElementById("status").textContent = "You win!";
+  }
+}
+</script>
+
+</body>
+</html>
