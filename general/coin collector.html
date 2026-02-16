@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coin Collector</title>
+<style>
+body { margin:0; text-align:center; background:#111; color:white; font-family:Arial;}
+canvas { background:#222; display:block; margin:20px auto; }
+</style>
+</head>
+<body>
+
+<h1>Coin Collector</h1>
+<p id="score">Score: 0</p>
+<canvas id="game" width="400" height="400"></canvas>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const scoreText = document.getElementById("score");
+
+let player = {x:180, y:180, size:20};
+let coin = {x: Math.random()*380, y: Math.random()*380, size:15};
+let keys = {};
+let score = 0;
+
+document.addEventListener("keydown", e=>keys[e.key]=true);
+document.addEventListener("keyup", e=>keys[e.key]=false);
+
+function update(){
+  ctx.clearRect(0,0,400,400);
+
+  // Move player
+  if(keys["ArrowUp"]||keys["w"]) player.y -=4;
+  if(keys["ArrowDown"]||keys["s"]) player.y +=4;
+  if(keys["ArrowLeft"]||keys["a"]) player.x -=4;
+  if(keys["ArrowRight"]||keys["d"]) player.x +=4;
+  player.x = Math.max(0, Math.min(400-player.size, player.x));
+  player.y = Math.max(0, Math.min(400-player.size, player.y));
+
+  // Draw player
+  ctx.fillStyle="cyan";
+  ctx.fillRect(player.x, player.y, player.size, player.size);
+
+  // Draw coin
+  ctx.fillStyle="yellow";
+  ctx.fillRect(coin.x, coin.y, coin.size, coin.size);
+
+  // Check collision
+  if(player.x < coin.x + coin.size && player.x + player.size > coin.x &&
+     player.y < coin.y + coin.size && player.y + player.size > coin.y){
+    score++;
+    coin.x = Math.random()*380;
+    coin.y = Math.random()*380;
+  }
+
+  scoreText.textContent = "Score: " + score;
+  requestAnimationFrame(update);
+}
+
+update();
+</script>
+</body>
+</html>
