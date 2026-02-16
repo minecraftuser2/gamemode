@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rhythm Tapper</title>
+<style>
+body {
+  font-family: Arial;
+  text-align: center;
+  background: #111;
+  color: white;
+}
+#track {
+  width: 80%;
+  height: 20px;
+  background: #444;
+  margin: 40px auto;
+  position: relative;
+}
+#target {
+  position: absolute;
+  left: 45%;
+  width: 10%;
+  height: 100%;
+  background: lime;
+}
+#beat {
+  position: absolute;
+  width: 10px;
+  height: 100%;
+  background: red;
+}
+button {
+  padding: 10px 20px;
+  font-size: 18px;
+}
+</style>
+</head>
+<body>
+
+<h1>Rhythm Tapper</h1>
+<div id="track">
+  <div id="target"></div>
+  <div id="beat"></div>
+</div>
+
+<button onclick="tap()">TAP</button>
+<p id="score">Score: 0</p>
+<p id="combo">Combo: 0</p>
+
+<script>
+let beat = document.getElementById("beat");
+let scoreText = document.getElementById("score");
+let comboText = document.getElementById("combo");
+
+let pos = 0;
+let dir = 1;
+let score = 0;
+let combo = 0;
+
+function update() {
+  pos += dir * 4;
+  if (pos > 380 || pos < 0) dir *= -1;
+  beat.style.left = pos + "px";
+  requestAnimationFrame(update);
+}
+
+function tap() {
+  let center = pos + 5;
+  let targetStart = 180;
+  let targetEnd = 220;
+
+  if (center > targetStart && center < targetEnd) {
+    score += 10 + combo * 2;
+    combo++;
+  } else {
+    combo = 0;
+  }
+
+  scoreText.textContent = "Score: " + score;
+  comboText.textContent = "Combo: " + combo;
+}
+
+update();
+</script>
+</body>
+</html>
