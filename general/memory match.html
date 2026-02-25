@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Memory Match</title>
+    <style>
+        body { margin:0; background:#222; color:#fff; font-family:Arial; text-align:center; }
+        table { margin:20px auto; border-collapse:collapse; }
+        td { width:80px; height:80px; border:2px solid #fff; font-size:36px; text-align:center; vertical-align:middle; cursor:pointer; }
+    </style>
+</head>
+<body>
+<h1>Memory Match</h1>
+<p id="score">Matches: 0</p>
+<table id="grid"></table>
+
+<script>
+let values=['A','B','C','D','E','F','G','H'];
+values=values.concat(values); // double
+values.sort(()=>Math.random()-0.5);
+
+let first=null, second=null, matches=0;
+
+const table=document.getElementById('grid');
+let index=0;
+for(let i=0;i<4;i++){
+    let row=document.createElement('tr');
+    for(let j=0;j<4;j++){
+        let cell=document.createElement('td');
+        cell.dataset.value=values[index];
+        cell.innerText='';
+        cell.addEventListener('click',()=>{
+            if(cell.innerText!=='' || second) return;
+            cell.innerText=cell.dataset.value;
+            if(!first) first=cell;
+            else { second=cell;
+                if(first.dataset.value===second.dataset.value){
+                    matches++;
+                    document.getElementById('score').innerText=`Matches: ${matches}`;
+                    first=null; second=null;
+                    if(matches===8) alert('You win!');
+                } else {
+                    setTimeout(()=>{first.innerText=''; second.innerText=''; first=null; second=null;},500);
+                }
+            }
+        });
+        row.appendChild(cell);
+        index++;
+    }
+    table.appendChild(row);
+}
+</script>
+</body>
+</html>
