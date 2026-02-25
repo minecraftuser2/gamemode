@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Meteor Escape</title>
+    <style>
+        body { margin:0; background:#000; color:#fff; font-family:Arial; text-align:center; }
+        canvas { display:block; margin:20px auto; background:#111; }
+        #score { font-size:24px; }
+    </style>
+</head>
+<body>
+<h1>Meteor Escape</h1>
+<p id="score">Score: 0</p>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+
+<script>
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+const player={x:300,y:350,w:30,h:30};
+let score=0;
+const meteors=[];
+
+function spawnMeteor(){ meteors.push({x:Math.random()*570,y:-30,w:30,h:30,dy:3+Math.random()*3}); }
+setInterval(spawnMeteor,800);
+
+document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowLeft') player.x=Math.max(0,player.x-20);
+    if(e.key==='ArrowRight') player.x=Math.min(canvas.width-30,player.x+20);
+});
+
+function gameLoop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='blue';
+    ctx.fillRect(player.x,player.y,player.w,player.h);
+
+    meteors.forEach(m=>{
+        m.y+=m.dy;
+        ctx.fillStyle='orange';
+        ctx.fillRect(m.x,m.y,m.w,m.h);
+
+        if(player.x+player.w>m.x && player.x<m.x+m.w && player.y+player.h>m.y && player.y<m.y+m.h){
+            score=0;
+            player.x=300; player.y=350;
+            document.getElementById('score').innerText=`Score: ${score}`;
+        }
+    });
+
+    while(meteors.length && meteors[0].y>canvas.height){ meteors.shift(); score++; document.getElementById('score').innerText=`Score: ${score}`; }
+    requestAnimationFrame(gameLoop);
+}
+gameLoop();
+</script>
+</body>
+</html>
