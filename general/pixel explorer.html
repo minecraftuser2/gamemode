@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Pixel Explorer</title>
+    <style>
+        body { margin:0; background:#333; color:#fff; text-align:center; font-family:Arial; }
+        canvas { display:block; margin:20px auto; background:#555; }
+        #score { font-size:24px; }
+    </style>
+</head>
+<body>
+<h1>Pixel Explorer</h1>
+<p id="score">Gems Collected: 0</p>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+
+<script>
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+
+const player={x:50,y:350,w:30,h:30,vy:0};
+const gravity=0.5;
+let score=0;
+
+const gems=[];
+for(let i=0;i<5;i++){
+    gems.push({x:Math.random()*550,y:Math.random()*350,w:20,h:20});
+}
+
+document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowLeft') player.x-=10;
+    if(e.key==='ArrowRight') player.x+=10;
+    if(e.key==='ArrowUp' && player.vy===0) player.vy=-10;
+});
+
+function gameLoop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    player.vy+=gravity;
+    player.y+=player.vy;
+
+    // Draw player
+    ctx.fillStyle='blue';
+    ctx.fillRect(player.x,player.y,player.w,player.h);
+
+    // Draw gems
+    ctx.fillStyle='yellow';
+    gems.forEach((g,i)=>{
+        ctx.fillRect(g.x,g.y,g.w,g.h);
+        // Collect
+        if(player.x+player.w>g.x && player.x<g.x+g.w && player.y+player.h>g.y && player.y<g.y+g.h){
+            score++;
+            document.getElementById('score').innerText=`Gems Collected: ${score}`;
+            g.x=Math.random()*550;
+            g.y=Math.random()*350;
+        }
+    });
+
+    // Reset if falls
+    if(player.y>canvas.height){
+        player.y=350; player.vy=0;
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+gameLoop();
+</script>
+</body>
+</html>
