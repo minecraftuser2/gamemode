@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Target Toss</title>
+    <style>
+        body { margin:0; background:#222; color:#fff; font-family:Arial; text-align:center; }
+        canvas { background:#444; display:block; margin:20px auto; }
+    </style>
+</head>
+<body>
+<h1>Target Toss</h1>
+<p id="score">Score: 0</p>
+<p id="time">Time: 30</p>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let score = 0;
+let timeLeft = 30;
+const targets = [];
+
+// Spawn 5 moving targets
+for(let i=0;i<5;i++){
+    targets.push({x:Math.random()*550, y:Math.random()*350, dx:(Math.random()*4+1)*(Math.random()<0.5?1:-1), dy:(Math.random()*4+1)*(Math.random()<0.5?1:-1), size:50});
+}
+
+canvas.addEventListener('click', e=>{
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    targets.forEach(t=>{
+        if(mx>=t.x && mx<=t.x+t.size && my>=t.y && my<=t.y+t.size){
+            score++;
+            document.getElementById('score').innerText = `Score: ${score}`;
+        }
+    });
+});
+
+function moveTargets(){
+    targets.forEach(t=>{
+        t.x+=t.dx; t.y+=t.dy;
+        if(t.x<0||t.x>canvas.width-t.size) t.dx*=-1;
+        if(t.y<0||t.y>canvas.height-t.size) t.dy*=-1;
+    });
+}
+
+function drawTargets(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='yellow';
+    targets.forEach(t=>ctx.fillRect(t.x,t.y,t.size,t.size));
+}
+
+// Timer
+const timer = setInterval(()=>{
+    timeLeft--;
+    document.getElementById('time').innerText = `Time: ${timeLeft}`;
+    if(timeLeft<=0){ clearInterval(timer); alert(`Time's up! Score: ${score}`);}
+},1000);
+
+function gameLoop(){
+    moveTargets();
+    drawTargets();
+    requestAnimationFrame(gameLoop);
+}
+gameLoop();
+</script>
+</body>
+</html>
