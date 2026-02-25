@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cloud Hopper</title>
+    <style>
+        body { margin:0; background:#87ceeb; text-align:center; font-family:Arial; }
+        canvas { display:block; margin:20px auto; background:#87ceeb; }
+        #score { font-size:24px; position:absolute; top:10px; left:10px; color:#fff; }
+    </style>
+</head>
+<body>
+<h1>Cloud Hopper</h1>
+<p id="score">Score: 0</p>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+
+<script>
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+
+let score=0;
+const player={x:300,y:350,w:30,h:30,vy:0};
+const gravity=0.5;
+const clouds=[];
+
+// Generate clouds
+for(let i=0;i<8;i++){
+    clouds.push({x:Math.random()*550,y:Math.random()*350,w:100,h:20});
+}
+
+document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowLeft') player.x-=20;
+    if(e.key==='ArrowRight') player.x+=20;
+    if(e.key==='ArrowUp' && player.vy===0) player.vy=-10;
+});
+
+function gameLoop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    player.vy+=gravity;
+    player.y+=player.vy;
+
+    clouds.forEach(c=>{
+        ctx.fillStyle='white';
+        ctx.fillRect(c.x,c.y,c.w,c.h);
+        // collision
+        if(player.x+player.w>c.x && player.x<c.x+c.w && player.y+player.h>c.y && player.y+player.h< c.y+ c.h+player.vy){
+            player.vy=0;
+            player.y=c.y-player.h;
+            score++;
+            document.getElementById('score').innerText=`Score: ${score}`;
+        }
+    });
+
+    // draw player
+    ctx.fillStyle='red';
+    ctx.fillRect(player.x,player.y,player.w,player.h);
+
+    if(player.y>canvas.height){
+        player.y=350; player.vy=0; score=0;
+        document.getElementById('score').innerText=`Score: ${score}`;
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+gameLoop();
+</script>
+</body>
+</html>
