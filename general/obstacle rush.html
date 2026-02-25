@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Obstacle Rush</title>
+    <style>
+        body { margin:0; background:#222; color:#fff; text-align:center; font-family:Arial; }
+        canvas { display:block; margin:20px auto; background:#333; }
+        #score { font-size:24px; }
+    </style>
+</head>
+<body>
+<h1>Obstacle Rush</h1>
+<p id="score">Score: 0</p>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+
+<script>
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+
+let score=0;
+const player={x:50,y:350,w:30,h:30,vy:0};
+const gravity=0.5;
+const obstacles=[];
+
+for(let i=0;i<5;i++){
+    obstacles.push({x:200+i*100,y:350,w:30,h:30,dx:-2});
+}
+
+document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowUp' && player.vy===0) player.vy=-10;
+});
+
+function gameLoop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    player.vy+=gravity;
+    player.y+=player.vy;
+
+    ctx.fillStyle='blue';
+    ctx.fillRect(player.x,player.y,player.w,player.h);
+
+    obstacles.forEach(o=>{
+        o.x+=o.dx;
+        if(o.x<0) { o.x=canvas.width; score++; document.getElementById('score').innerText=`Score: ${score}`;}
+        ctx.fillStyle='red';
+        ctx.fillRect(o.x,o.y,o.w,o.h);
+
+        if(player.x+player.w>o.x && player.x<o.x+o.w && player.y+player.h>o.y && player.y<o.y+o.h){
+            score=0;
+            player.y=350; player.vy=0;
+            document.getElementById('score').innerText=`Score: ${score}`;
+        }
+    });
+
+    if(player.y>canvas.height) { player.y=350; player.vy=0; }
+
+    requestAnimationFrame(gameLoop);
+}
+gameLoop();
+</script>
+</body>
+</html>
