@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Block Slide</title>
+    <style>
+        body { margin:0; background:#222; color:#fff; text-align:center; font-family:Arial; }
+        canvas { display:block; margin:20px auto; background:#333; }
+    </style>
+</head>
+<body>
+<h1>Block Slide</h1>
+<canvas id="gameCanvas" width="400" height="400"></canvas>
+
+<script>
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+
+const size=4; // 4x4 puzzle
+const tileSize=100;
+let grid=[];
+let empty={x:3,y:3};
+
+// init grid
+let num=1;
+for(let y=0;y<size;y++){
+    grid[y]=[];
+    for(let x=0;x<size;x++){
+        grid[y][x]=num;
+        num++;
+    }
+}
+grid[3][3]=0; // empty
+
+function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(let y=0;y<size;y++){
+        for(let x=0;x<size;x++){
+            if(grid[y][x]!==0){
+                ctx.fillStyle='orange';
+                ctx.fillRect(x*tileSize,y*tileSize,tileSize,tileSize);
+                ctx.fillStyle='black';
+                ctx.font='40px Arial';
+                ctx.fillText(grid[y][x], x*tileSize+35,y*tileSize+60);
+            }
+        }
+    }
+}
+
+canvas.addEventListener('click',e=>{
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left;
+    const my=e.clientY-rect.top;
+    const tx=Math.floor(mx/tileSize);
+    const ty=Math.floor(my/tileSize);
+
+    if((Math.abs(tx-empty.x)+Math.abs(ty-empty.y))===1){
+        grid[empty.y][empty.x]=grid[ty][tx];
+        grid[ty][tx]=0;
+        empty={x:tx,y:ty};
+    }
+});
+
+draw();
+function loop(){ draw(); requestAnimationFrame(loop); }
+loop();
+</script>
+</body>
+</html>
