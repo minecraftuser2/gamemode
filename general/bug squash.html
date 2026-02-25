@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bug Squash</title>
+    <style>
+        body {
+            margin: 0;
+            background: #222;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        canvas {
+            background: #333;
+            display: block;
+            margin: 20px auto;
+        }
+        #score {
+            font-size: 24px;
+        }
+        #time {
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bug Squash</h1>
+    <p id="score">Score: 0</p>
+    <p id="time">Time: 30</p>
+    <canvas id="gameCanvas" width="600" height="400"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const bugSize = 30;
+        let score = 0;
+        let timeLeft = 30;
+        let bugs = [];
+
+        // Spawn a bug at random position
+        function spawnBug() {
+            const x = Math.random() * (canvas.width - bugSize);
+            const y = Math.random() * (canvas.height - bugSize);
+            bugs.push({x, y, dx: Math.random()*4-2, dy: Math.random()*4-2});
+        }
+
+        // Draw bugs
+        function drawBugs() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'red';
+            bugs.forEach(bug => {
+                ctx.beginPath();
+                ctx.arc(bug.x + bugSize/2, bug.y + bugSize/2, bugSize/2, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        // Move bugs
+        function moveBugs() {
+            bugs.forEach(bug => {
+                bug.x += bug.dx;
+                bug.y += bug.dy;
+                // Bounce off walls
+                if(bug.x < 0 || bug.x > canvas.width - bugSize) bug.dx *= -1;
+                if(bug.y < 0 || bug.y > canvas.height - bugSize) bug.dy *= -1;
+            });
+        }
+
+        // Handle clicks
+        canvas.addEventListener('click', function(e){
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            for(let i = bugs.length - 1; i >= 0; i--){
+                const bug = bugs[i];
+                if(mouseX >= bug.x && mouseX <= bug.x + bugSize &&
+                   mouseY >= bug.y && mouseY <= bug.y + bugSize){
+                       bugs.splice(i, 1);
+                       score++;
+                       document.getElementById('score').innerText = `Score: ${score}`;
+                       spawnBug(); // spawn another bug immediately
+                   }
+            }
+        });
+
+        // Timer
+        const timer = setInterval(() => {
+            timeLeft--;
+            document.getElementById('time').innerText = `Time: ${timeLeft}`;
+            if(timeLeft <= 0){
+                clearInterval(timer);
+                alert(`Time's up! Your score: ${score}`);
+            }
+        }, 1000);
+
+        // Start game with initial bugs
+        for(let i=0;i<5;i++) spawnBug();
+
+        function gameLoop(){
+            moveBugs();
+            drawBugs();
+            requestAnimationFrame(gameLoop);
+        }
+        gameLoop();
+    </script>
+</body>
+</html>
