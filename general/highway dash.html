@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Highway Dash</title>
+    <style>
+        body { margin:0; background:#222; text-align:center; font-family:Arial; color:#fff; }
+        canvas { display:block; margin:20px auto; background:#333; }
+        #score { font-size:24px; }
+    </style>
+</head>
+<body>
+<h1>Highway Dash</h1>
+<p id="score">Score: 0</p>
+<canvas id="gameCanvas" width="400" height="600"></canvas>
+
+<script>
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+const player={x:180,y:500,w:40,h:40};
+let score=0;
+
+const obstacles=[];
+function spawnObstacle(){
+    obstacles.push({x:Math.random()*360,y:-40,w:40,h:40});
+}
+setInterval(spawnObstacle,1000);
+
+document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowLeft') player.x=Math.max(0,player.x-20);
+    if(e.key==='ArrowRight') player.x=Math.min(canvas.width-40,player.x+20);
+});
+
+function gameLoop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    // draw player
+    ctx.fillStyle='green';
+    ctx.fillRect(player.x,player.y,player.w,player.h);
+    // move and draw obstacles
+    obstacles.forEach(o=>{
+        o.y+=5;
+        ctx.fillStyle='red';
+        ctx.fillRect(o.x,o.y,o.w,o.h);
+        if(player.x+player.w>o.x && player.x<o.x+o.w && player.y+player.h>o.y && player.y<o.y+o.h){
+            score=0;
+            document.getElementById('score').innerText=`Score: ${score}`;
+            player.x=180; player.y=500;
+        }
+    });
+    // remove off-screen obstacles
+    while(obstacles.length && obstacles[0].y>canvas.height) { obstacles.shift(); score++; document.getElementById('score').innerText=`Score: ${score}`; }
+    requestAnimationFrame(gameLoop);
+}
+gameLoop();
+</script>
+</body>
+</html>
