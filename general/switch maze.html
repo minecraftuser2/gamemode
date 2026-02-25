@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Switch Maze</title>
+    <style>
+        body { margin:0; background:#222; color:#fff; font-family:Arial; text-align:center; }
+        canvas { background:#333; display:block; margin:20px auto; }
+    </style>
+</head>
+<body>
+<h1>Switch Maze</h1>
+<p id="status">Switches activated: 0 / 5</p>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const switches = [];
+let activated = 0;
+
+// Generate 5 random switches
+for(let i=0;i<5;i++){
+    switches.push({x: Math.random()*550, y: Math.random()*350, size: 50, active:false});
+}
+
+// Draw switches
+function drawSwitches(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    switches.forEach(s => {
+        ctx.fillStyle = s.active ? 'green' : 'red';
+        ctx.fillRect(s.x,s.y,s.size,s.size);
+    });
+}
+
+canvas.addEventListener('click', e=>{
+    const rect = canvas.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+
+    switches.forEach(s=>{
+        if(mx>=s.x && mx<=s.x+s.size && my>=s.y && my<=s.y+s.size && !s.active){
+            s.active = true;
+            activated++;
+            document.getElementById('status').innerText = `Switches activated: ${activated} / 5`;
+            if(activated===5) alert('All switches activated! You win!');
+        }
+    });
+});
+
+function gameLoop(){
+    drawSwitches();
+    requestAnimationFrame(gameLoop);
+}
+gameLoop();
+</script>
+</body>
+</html>
