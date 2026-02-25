@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Circuit Connect</title>
+    <style>
+        body { margin:0; background:#111; color:#fff; text-align:center; font-family:Arial; }
+        canvas { display:block; margin:20px auto; background:#222; }
+    </style>
+</head>
+<body>
+<h1>Circuit Connect</h1>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+
+<script>
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+
+const nodes=[
+    {x:50,y:50,connected:false},
+    {x:550,y:50,connected:false},
+    {x:50,y:350,connected:false},
+    {x:550,y:350,connected:false}
+];
+
+let selected=null;
+
+canvas.addEventListener('click',e=>{
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left;
+    const my=e.clientY-rect.top;
+    nodes.forEach(n=>{
+        if(Math.hypot(mx-n.x,my-n.y)<20){
+            if(!selected) selected=n;
+            else {
+                ctx.beginPath();
+                ctx.moveTo(selected.x,selected.y);
+                ctx.lineTo(n.x,n.y);
+                ctx.strokeStyle='yellow';
+                ctx.lineWidth=4;
+                ctx.stroke();
+                selected.connected=true; n.connected=true;
+                selected=null;
+            }
+        }
+    });
+});
+
+function draw(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    nodes.forEach(n=>{
+        ctx.fillStyle=n.connected?'green':'red';
+        ctx.beginPath();
+        ctx.arc(n.x,n.y,20,0,Math.PI*2);
+        ctx.fill();
+    });
+    requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>
