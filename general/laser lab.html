@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Laser Lab</title>
+    <style>
+        body { margin:0; background:#111; text-align:center; font-family:Arial; color:#fff; }
+        canvas { display:block; margin:20px auto; background:#222; }
+        #score { font-size:24px; }
+    </style>
+</head>
+<body>
+<h1>Laser Lab</h1>
+<p id="score">Score: 0</p>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+
+<script>
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+let score=0;
+const player={x:50,y:350,w:30,h:30,vy:0};
+const gravity=0.5;
+const lasers=[];
+
+// generate lasers
+for(let i=0;i<5;i++){
+    lasers.push({x:100+i*100,y:Math.random()*350,w:10,h:80,dy:Math.random()*2+1});
+}
+
+document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowLeft') player.x-=10;
+    if(e.key==='ArrowRight') player.x+=10;
+    if(e.key==='ArrowUp' && player.vy===0) player.vy=-10;
+});
+
+function gameLoop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    player.vy+=gravity;
+    player.y+=player.vy;
+
+    // Draw player
+    ctx.fillStyle='green';
+    ctx.fillRect(player.x,player.y,player.w,player.h);
+
+    // Move lasers
+    lasers.forEach(l=>{
+        l.y+=l.dy;
+        if(l.y<0||l.y>canvas.height-l.h) l.dy*=-1;
+        ctx.fillStyle='red';
+        ctx.fillRect(l.x,l.y,l.w,l.h);
+
+        // Collision
+        if(player.x+player.w>l.x && player.x<l.x+l.w && player.y+player.h>l.y && player.y<l.y+l.h){
+            score=0;
+            document.getElementById('score').innerText=`Score: ${score}`;
+            player.x=50; player.y=350; player.vy=0;
+        }
+    });
+
+    score++;
+    document.getElementById('score').innerText=`Score: ${score}`;
+    requestAnimationFrame(gameLoop);
+}
+gameLoop();
+</script>
+</body>
+</html>
