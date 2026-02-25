@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Laser Dodger</title>
+    <style>
+        body { margin:0; background:#111; color:#fff; font-family:Arial; text-align:center; }
+        canvas { display:block; margin:20px auto; background:#222; }
+        #score { font-size:24px; }
+    </style>
+</head>
+<body>
+<h1>Laser Dodger</h1>
+<p id="score">Score: 0</p>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+
+<script>
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+let score=0;
+const player={x:50,y:350,w:30,h:30,vy:0};
+const gravity=0.5;
+const lasers=[];
+
+for(let i=0;i<5;i++){
+    lasers.push({x:200+i*80,y:Math.random()*300,w:10,h:50,dx:-2});
+}
+
+document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowUp' && player.vy===0) player.vy=-10;
+});
+
+function gameLoop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    player.vy+=gravity;
+    player.y+=player.vy;
+
+    ctx.fillStyle='green';
+    ctx.fillRect(player.x,player.y,player.w,player.h);
+
+    lasers.forEach(l=>{
+        l.x+=l.dx;
+        if(l.x<0) { l.x=canvas.width; score++; document.getElementById('score').innerText=`Score: ${score}`; }
+        ctx.fillStyle='red';
+        ctx.fillRect(l.x,l.y,l.w,l.h);
+
+        if(player.x+player.w>l.x && player.x<l.x+l.w && player.y+player.h>l.y && player.y<l.y+l.h){
+            score=0; player.y=350; player.vy=0;
+            document.getElementById('score').innerText=`Score: ${score}`;
+        }
+    });
+
+    if(player.y>canvas.height) player.y=350; 
+    requestAnimationFrame(gameLoop);
+}
+gameLoop();
+</script>
+</body>
+</html>
