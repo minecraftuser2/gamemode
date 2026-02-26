@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Time Jumper</title>
+<style>
+body{margin:0;background:#222;color:white;text-align:center;font-family:Arial;}
+canvas{display:block;margin:20px auto;background:#333;}
+</style>
+</head>
+<body>
+<h1>Time Jumper</h1>
+<p id="score">Survival: 0</p>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+
+<script>
+const ctx=gameCanvas.getContext("2d");
+
+let player={x:50,y:350,vy:0};
+let gravity=0.5;
+let timer=0;
+let score=0;
+
+const platforms=[
+{x:150,y:300},
+{x:300,y:250},
+{x:450,y:200}
+];
+
+document.addEventListener("keydown",e=>{
+if(e.key==="ArrowUp" && player.vy===0) player.vy=-10;
+});
+
+function loop(){
+ctx.clearRect(0,0,600,400);
+
+timer++;
+
+player.vy+=gravity;
+player.y+=player.vy;
+
+platforms.forEach((p,i)=>{
+if(Math.floor(timer/120)%2===i%2){
+ctx.fillStyle="orange";
+ctx.fillRect(p.x,p.y,100,10);
+
+if(player.x+30>p.x && player.x<p.x+100 &&
+   player.y+30>p.y && player.y+30<p.y+10){
+player.vy=0;
+player.y=p.y-30;
+}
+}
+});
+
+ctx.fillStyle="cyan";
+ctx.fillRect(player.x,player.y,30,30);
+
+score++;
+document.getElementById("score").innerText="Survival: "+score;
+
+if(player.y>400){player.y=350;player.vy=0;score=0;}
+
+requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
