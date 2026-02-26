@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Balloon Pop</title>
+    <style>
+        body { margin:0; background:#87ceeb; color:#000; font-family:Arial; text-align:center; }
+        canvas { display:block; margin:20px auto; background:#87ceeb; }
+        #score { font-size:24px; }
+    </style>
+</head>
+<body>
+<h1>Balloon Pop</h1>
+<p id="score">Score: 0</p>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+
+<script>
+const canvas=document.getElementById('gameCanvas');
+const ctx=canvas.getContext('2d');
+let balloons=[], score=0;
+
+function spawnBalloon(){ balloons.push({x:Math.random()*570,y:400,w:30,h:50,dy:-2-Math.random()*2}); }
+setInterval(spawnBalloon,800);
+
+canvas.addEventListener('click',e=>{
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left;
+    const my=e.clientY-rect.top;
+    balloons.forEach(b=>{
+        if(mx>b.x && mx<b.x+b.w && my>b.y && my<b.y+b.h){
+            score++; b.y=400; b.x=Math.random()*570;
+            document.getElementById('score').innerText=`Score: ${score}`;
+        }
+    });
+});
+
+function gameLoop(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    balloons.forEach(b=>{ b.y+=b.dy; ctx.fillStyle='red'; ctx.fillRect(b.x,b.y,b.w,b.h); });
+    requestAnimationFrame(gameLoop);
+}
+gameLoop();
+</script>
+</body>
+</html>
