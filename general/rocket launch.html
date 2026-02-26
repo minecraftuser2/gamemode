@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Rocket Launch</title>
+<style>
+body{margin:0;background:black;color:white;text-align:center;font-family:Arial;}
+canvas{display:block;margin:20px auto;background:#111;}
+</style>
+</head>
+<body>
+<h1>Rocket Launch</h1>
+<p id="score">Height: 0</p>
+<canvas id="gameCanvas" width="400" height="600"></canvas>
+
+<script>
+const c=gameCanvas;
+const ctx=c.getContext("2d");
+
+let rocket={x:180,y:500,vy:0};
+let gravity=0.3;
+let thrust=false;
+let height=0;
+
+document.addEventListener("keydown",e=>{if(e.key===" ")thrust=true;});
+document.addEventListener("keyup",e=>{if(e.key===" ")thrust=false;});
+
+function loop(){
+ctx.clearRect(0,0,c.width,c.height);
+
+rocket.vy+=gravity;
+if(thrust) rocket.vy-=0.6;
+
+rocket.y+=rocket.vy;
+height=Math.max(height,600-rocket.y);
+
+ctx.fillStyle="white";
+ctx.fillRect(rocket.x,rocket.y,40,60);
+
+if(rocket.y>540){rocket.y=500;rocket.vy=0;height=0;}
+
+score.innerText="Height: "+Math.floor(height);
+
+requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
