@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Space Miner</title>
+<style>
+body{margin:0;background:#000;color:white;text-align:center;font-family:Arial;}
+canvas{display:block;margin:20px auto;background:#111;}
+</style>
+</head>
+<body>
+<h1>Space Miner</h1>
+<p id="score">Crystals: 0</p>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+
+<script>
+const ctx=gameCanvas.getContext("2d");
+
+let player={x:300,y:200};
+let crystals=[];
+let score=0;
+
+setInterval(()=>crystals.push({
+x:Math.random()*580,
+y:Math.random()*380
+}),1200);
+
+document.addEventListener("keydown",e=>{
+if(e.key==="ArrowLeft")player.x-=15;
+if(e.key==="ArrowRight")player.x+=15;
+if(e.key==="ArrowUp")player.y-=15;
+if(e.key==="ArrowDown")player.y+=15;
+});
+
+function loop(){
+ctx.clearRect(0,0,600,400);
+
+ctx.fillStyle="white";
+ctx.fillRect(player.x,player.y,20,20);
+
+crystals.forEach(c=>{
+ctx.fillStyle="magenta";
+ctx.fillRect(c.x,c.y,15,15);
+
+if(Math.abs(player.x-c.x)<20 && Math.abs(player.y-c.y)<20){
+score++;
+c.x=-100;
+document.getElementById("score").innerText="Crystals: "+score;
+}
+});
+
+requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
