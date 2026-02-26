@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Jetpack Journey</title>
+<style>
+body{margin:0;background:#222;color:white;text-align:center;font-family:Arial;}
+canvas{display:block;margin:20px auto;background:#333;}
+</style>
+</head>
+<body>
+<h1>Jetpack Journey</h1>
+<p id="score">Score: 0</p>
+<canvas id="gameCanvas" width="600" height="400"></canvas>
+
+<script>
+const ctx=gameCanvas.getContext("2d");
+
+let player={x:80,y:200,vy:0};
+let pipes=[];
+let score=0;
+
+setInterval(()=>pipes.push({x:600,gapY:100+Math.random()*200}),1500);
+
+document.addEventListener("keydown",e=>{
+if(e.key===" ") player.vy=-6;
+});
+
+function loop(){
+ctx.clearRect(0,0,600,400);
+
+player.vy+=0.4;
+player.y+=player.vy;
+
+ctx.fillStyle="cyan";
+ctx.fillRect(player.x,player.y,30,30);
+
+pipes.forEach(p=>{
+p.x-=3;
+
+ctx.fillStyle="green";
+ctx.fillRect(p.x,0,40,p.gapY-60);
+ctx.fillRect(p.x,p.gapY+60,40,400);
+
+if(player.x+30>p.x && player.x<p.x+40 &&
+   (player.y<p.gapY-60 || player.y+30>p.gapY+60)){
+   score=0; player.y=200;
+}
+
+if(p.x===player.x) score++;
+});
+
+scoreEl=document.getElementById("score");
+scoreEl.innerText="Score: "+score;
+
+requestAnimationFrame(loop);
+}
+loop();
+</script>
+</body>
+</html>
