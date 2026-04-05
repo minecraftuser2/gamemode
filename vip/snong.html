@@ -1,85 +1,115 @@
-import pygame
-import random
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SNONG</title>
+<style>
+  body { margin: 0; background: #1e1e1e; display: flex; justify-content: center; align-items: center; height: 100vh; }
+  canvas { background: #1e1e1e; display: block; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const W = 800, H = 600;
+canvas.width = W;
+canvas.height = H;
 
-# Initialize
-pygame.init()
-W, H = 800, 600
-screen = pygame.display.set_mode((W, H))
-pygame.display.set_caption("SNONG")
-clock = pygame.time.Clock()
+// Colors
+const BG_COLOR = "#1e1e1e";
+const SNAKE_GREEN = "#4CAF50";
+const PADDLE_BLUE = "#2196F3";
+const APPLE_RED = "#FF5252";
 
-# Colors
-BG_COLOR = (30, 30, 30)
-SNAKE_GREEN = (76, 175, 80)
-PADDLE_BLUE = (33, 150, 243)
-APPLE_RED = (255, 82, 82)
+// Objects
+let paddle = { x: W/2 - 60, y: H - 40, width: 120, height: 15 };
+let snake_pos = { x: W/2, y: H/2 };
+let snake_speed = { x: 5, y: -5 };
+let history = [];
+let snake_len = 15;
+let apple = { x: Math.random()*(W-200)+100, y: Math.random()*150+50, size: 22 };
 
-# Objects
-paddle = pygame.Rect(W//2 - 60, H - 40, 120, 15)
-snake_pos = [W//2, H//2]
-snake_speed = [5, -5]
-history = [] # High-resolution path for the "connected" look
-snake_len = 15 
-apple = pygame.Rect(random.randint(50, W-50), random.randint(50, 150), 22, 22)
+let keys = {};
+document.addEventListener("keydown", e => keys[e.key] = true);
+document.addEventListener("keyup", e => keys[e.key] = false);
 
-running = True
+function gameLoop() {
+    // 1. Controls
+    if ((keys["ArrowLeft"] || keys["a"]) && paddle.x > 0) paddle.x -= 12;
+    if ((keys["ArrowRight"] || keys["d"]) && paddle.x + paddle.width < W) paddle.x += 12;
 
-while running:
-    screen.fill(BG_COLOR)
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT: running = False
+    // 2. Physics & Path Tracking
+    snake_pos.x += snake_speed.x;
+    snake_pos.y += snake_speed.y;
 
-    # 1. Controls
-    keys = pygame.key.get_pressed()
-    if (keys[pygame.K_LEFT] or keys[pygame.K_a]) and paddle.left > 0: paddle.x -= 12
-    if (keys[pygame.K_RIGHT] or keys[pygame.K_d]) and paddle.right < W: paddle.x += 12
+    history.unshift({ x: snake_pos.x, y: snake_pos.y });
+    if (history.length > snake_len * 4) history.pop();
 
-    # 2. Physics & Path Tracking
-    snake_pos[0] += snake_speed[0]
-    snake_pos[1] += snake_speed[1]
+    // Bounces
+    if (snake_pos.x <= 12 || snake_pos.x >= W - 12) snake_speed.x *= -1;
+    if (snake_pos.y <= 12) snake_speed.y *= -1;
 
-    # Store position every frame for a smooth line
-    history.insert(0, tuple(snake_pos))
-    if len(history) > snake_len * 4: # Adjust multiplier for 'stretch'
-        history.pop()
+    // Collisions
+    if (snake_pos.x >= paddle.x && snake_pos.x <= paddle.x + paddle.width &&
+        snake_pos.y + 12 >= paddle.y && snake_pos.y - 12 <= paddle.y + paddle.height) {
+        snake_speed.y = -Math.abs(snake_speed.y);
+        snake_speed.x = (snake_pos.x - (paddle.x + paddle.width/2)) / 8;
+    }
 
-    # Bounces
-    if snake_pos[0] <= 12 or snake_pos[0] >= W - 12: snake_speed[0] *= -1
-    if snake_pos[1] <= 12: snake_speed[1] *= -1
-    
-    # 3. Collisions
-    head_rect = pygame.Rect(snake_pos[0]-12, snake_pos[1]-12, 24, 24)
-    
-    if head_rect.colliderect(paddle):
-        snake_speed[1] = -abs(snake_speed[1])
-        # Direct the bounce based on where it hits the paddle
-        snake_speed[0] = (snake_pos[0] - paddle.centerx) / 8
+    if (snake_pos.x >= apple.x && snake_pos.x <= apple.x + apple.size &&
+        snake_pos.y >= apple.y && snake_pos.y <= apple.y + apple.size) {
+        snake_len += 5;
+        apple.x = Math.random()*(W-200)+100;
+        apple.y = Math.random()*150+50;
+    }
 
-    if head_rect.colliderect(apple):
-        snake_len += 5
-        apple.topleft = (random.randint(100, W-100), random.randint(50, 200))
+    if (snake_pos.y >= H) { alert("Game Over!"); snake_pos = {x: W/2, y: H/2}; snake_len=15; history=[]; snake_speed={x:5,y:-5}; }
 
-    if snake_pos[1] >= H: running = False # Floor is lava
+    // 3. Drawing
+    ctx.fillStyle = BG_COLOR;
+    ctx.fillRect(0, 0, W, H);
 
-    # 4. Drawing SNONG (The Connected Look)
-    # Draw the thick body line
-    if len(history) > 1:
-        pygame.draw.lines(screen, SNAKE_GREEN, False, history, 20)
-    
-    # Cap the head and tail with circles for that Google Snake rounded feel
-    pygame.draw.circle(screen, SNAKE_GREEN, (int(history[0][0]), int(history[0][1])), 10)
-    pygame.draw.circle(screen, SNAKE_GREEN, (int(history[-1][0]), int(history[-1][1])), 10)
+    // Snake
+    if (history.length > 1) {
+        ctx.strokeStyle = SNAKE_GREEN;
+        ctx.lineWidth = 20;
+        ctx.beginPath();
+        ctx.moveTo(history[0].x, history[0].y);
+        for (let i=1; i<history.length; i++) ctx.lineTo(history[i].x, history[i].y);
+        ctx.stroke();
+    }
+    ctx.fillStyle = SNAKE_GREEN;
+    ctx.beginPath();
+    ctx.arc(history[0].x, history[0].y, 10, 0, Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(history[history.length-1].x, history[history.length-1].y, 10, 0, Math.PI*2);
+    ctx.fill();
 
-    # Draw Apple and Paddle
-    pygame.draw.circle(screen, APPLE_RED, apple.center, 11)
-    pygame.draw.rect(screen, PADDLE_BLUE, paddle, border_radius=8)
+    // Apple
+    ctx.fillStyle = APPLE_RED;
+    ctx.beginPath();
+    ctx.arc(apple.x + apple.size/2, apple.y + apple.size/2, 11, 0, Math.PI*2);
+    ctx.fill();
 
-    # Title text
-    font = pygame.font.SysFont("Arial", 24, bold=True)
-    img = font.render("SNONG", True, (100, 100, 100))
-    screen.blit(img, (W//2 - 35, 10))
-    
-    pygame.display.flip()
-    clock.tick(60)
+    // Paddle
+    ctx.fillStyle = PADDLE_BLUE;
+    ctx.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
+    ctx.strokeStyle = "#000";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(paddle.x, paddle.y, paddle.width, paddle.height);
 
-pygame.quit()
+    // Title
+    ctx.fillStyle = "#646464";
+    ctx.font = "24px Arial";
+    ctx.fillText("SNONG", W/2-35, 30);
+
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+</body>
+</html>
