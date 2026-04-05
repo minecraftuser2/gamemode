@@ -1,0 +1,85 @@
+import pygame
+import random
+
+# Initialize
+pygame.init()
+W, H = 800, 600
+screen = pygame.display.set_mode((W, H))
+pygame.display.set_caption("SNONG")
+clock = pygame.time.Clock()
+
+# Colors
+BG_COLOR = (30, 30, 30)
+SNAKE_GREEN = (76, 175, 80)
+PADDLE_BLUE = (33, 150, 243)
+APPLE_RED = (255, 82, 82)
+
+# Objects
+paddle = pygame.Rect(W//2 - 60, H - 40, 120, 15)
+snake_pos = [W//2, H//2]
+snake_speed = [5, -5]
+history = [] # High-resolution path for the "connected" look
+snake_len = 15 
+apple = pygame.Rect(random.randint(50, W-50), random.randint(50, 150), 22, 22)
+
+running = True
+
+while running:
+    screen.fill(BG_COLOR)
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT: running = False
+
+    # 1. Controls
+    keys = pygame.key.get_pressed()
+    if (keys[pygame.K_LEFT] or keys[pygame.K_a]) and paddle.left > 0: paddle.x -= 12
+    if (keys[pygame.K_RIGHT] or keys[pygame.K_d]) and paddle.right < W: paddle.x += 12
+
+    # 2. Physics & Path Tracking
+    snake_pos[0] += snake_speed[0]
+    snake_pos[1] += snake_speed[1]
+
+    # Store position every frame for a smooth line
+    history.insert(0, tuple(snake_pos))
+    if len(history) > snake_len * 4: # Adjust multiplier for 'stretch'
+        history.pop()
+
+    # Bounces
+    if snake_pos[0] <= 12 or snake_pos[0] >= W - 12: snake_speed[0] *= -1
+    if snake_pos[1] <= 12: snake_speed[1] *= -1
+    
+    # 3. Collisions
+    head_rect = pygame.Rect(snake_pos[0]-12, snake_pos[1]-12, 24, 24)
+    
+    if head_rect.colliderect(paddle):
+        snake_speed[1] = -abs(snake_speed[1])
+        # Direct the bounce based on where it hits the paddle
+        snake_speed[0] = (snake_pos[0] - paddle.centerx) / 8
+
+    if head_rect.colliderect(apple):
+        snake_len += 5
+        apple.topleft = (random.randint(100, W-100), random.randint(50, 200))
+
+    if snake_pos[1] >= H: running = False # Floor is lava
+
+    # 4. Drawing SNONG (The Connected Look)
+    # Draw the thick body line
+    if len(history) > 1:
+        pygame.draw.lines(screen, SNAKE_GREEN, False, history, 20)
+    
+    # Cap the head and tail with circles for that Google Snake rounded feel
+    pygame.draw.circle(screen, SNAKE_GREEN, (int(history[0][0]), int(history[0][1])), 10)
+    pygame.draw.circle(screen, SNAKE_GREEN, (int(history[-1][0]), int(history[-1][1])), 10)
+
+    # Draw Apple and Paddle
+    pygame.draw.circle(screen, APPLE_RED, apple.center, 11)
+    pygame.draw.rect(screen, PADDLE_BLUE, paddle, border_radius=8)
+
+    # Title text
+    font = pygame.font.SysFont("Arial", 24, bold=True)
+    img = font.render("SNONG", True, (100, 100, 100))
+    screen.blit(img, (W//2 - 35, 10))
+    
+    pygame.display.flip()
+    clock.tick(60)
+
+pygame.quit()
